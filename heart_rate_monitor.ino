@@ -1,7 +1,7 @@
 
 byte pinSignal = A0;
 
-#define thresh 512
+#define thresh 250
 
 volatile unsigned int s = 0;
 volatile int P = thresh;
@@ -10,6 +10,14 @@ volatile unsigned long numSample=0, pNumSample=0;
 
 volatile int IBI = 600; // time b/w heart beat (in ms)
 volatile int N = 0;
+volatile boolean isPulse = false;
+volatile bool isFirstBeat = true, isSecondBeat = false; 
+volatile unsigned int rate[10];
+volatile unsigned long BPM = 0;
+
+int i = 0;
+
+word runningTotal = 0;
 
 
 void setup() {
@@ -22,7 +30,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-
+  delay(20);
 }
 
 
@@ -44,6 +52,9 @@ ISR(TIMER2_COMPA_vect){
 
   numSample += 2;
   N = numSample - pNumSample;
+
+  Serial.print("\tN = ");
+  Serial.print(N);
   
   if(s>P){P=s;}
 
@@ -51,9 +62,54 @@ ISR(TIMER2_COMPA_vect){
     if(s<T){T=s;}
  }
   
-  Serial.print("\tP = ");
-  Serial.print(P);
-  Serial.print("\tT = ");
-  Serial.println(T);
+  //Serial.print("\tP = ");
+  //Serial.print(P);
+  //Serial.print("\tT = ");
+  //Serial.print(T);
   
+  Serial.print("\tIBI");
+  Serial.print(IBI);
+    
+  if(N>250){
+
+    if(s>thresh && N > (IBI/5)*3){
+  
+         isPulse = true;
+         IBI = numSample - pNumSample;
+         pNumSample = numSample;     
+      }
+    
+    }
+
+
+    if(isFirstBeat){
+        isFirstBeat  = false;
+        isSecondBeat = true;
+        sei();
+        return;
+      }
+
+   if(isSecondBeat){
+      isSecondBeat = false;
+      isFirstBeat = true;
+
+      for(i=0; i <9; i++){
+          rate[i] = IBI;
+        }  
+    }
+
+  runningTotal = 0;
+  for(i=0; i<8; i++){
+      rate[i] = rate[i+1];
+      runningTotal += rate[i];
+    }
+
+    rate[9] = IBI;
+    runningTotal += rate[9];
+    runningTotal /= 10;
+    BPM = 15000/runningTotal;
+    Serial.print("\tBPM = ");
+    Serial.println(BPM);
+
+
   }
