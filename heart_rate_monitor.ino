@@ -1,14 +1,14 @@
 
 byte pinSignal = A0;
 
-#define thresh 250
+#define thresh 275
 
 volatile unsigned int s = 0;
 volatile int P = thresh;
 volatile int T = thresh;
-volatile unsigned long numSample=0, pNumSample=0;
+volatile unsigned long numSample=0, pNumSample=0; //previous number sample
 
-volatile int IBI = 600; // time b/w heart beat (in ms)
+volatile int IBI = 400; // time b/w heart beat (in ms)
 volatile int N = 0;
 volatile boolean isPulse = false;
 volatile bool isFirstBeat = true, isSecondBeat = false; 
@@ -47,40 +47,41 @@ void interruptSetup(){
 ISR(TIMER2_COMPA_vect){
   
   s = analogRead(pinSignal);
-  Serial.print("s = ");
-  Serial.print(s);
+  //Serial.print("s = ");
+  //Serial.println(s);
 
   numSample += 2;
   N = numSample - pNumSample;
 
-  Serial.print("\tN = ");
-  Serial.print(N);
+  //Serial.print("\tN = ");
+  //Serial.print(N);
   
-  if(s>P){P=s;}
+  if(s>P && s>thresh){P=s;}
 
  if(s<thresh && N> (IBI/5)*3){
     if(s<T){T=s;}
  }
-  
-  //Serial.print("\tP = ");
+
   //Serial.print(P);
-  //Serial.print("\tT = ");
-  //Serial.print(T);
+  //Serial.print("\t");
+  //Serial.println(T);
   
-  Serial.print("\tIBI");
-  Serial.print(IBI);
+  //Serial.print("\tIBI");
+  //Serial.print(IBI);
     
   if(N>250){
 
+    //Serial.println(s);
     if(s>thresh && N > (IBI/5)*3){
   
          isPulse = true;
          IBI = numSample - pNumSample;
-         pNumSample = numSample;     
-      }
-    
-    }
+         pNumSample = numSample; 
 
+         //Serial.print("p\t");
+         //Serial.println(IBI);
+      } 
+    }
 
     if(isFirstBeat){
         isFirstBeat  = false;
@@ -91,9 +92,8 @@ ISR(TIMER2_COMPA_vect){
 
    if(isSecondBeat){
       isSecondBeat = false;
-      isFirstBeat = true;
 
-      for(i=0; i <9; i++){
+      for(i=0; i<10; i++){
           rate[i] = IBI;
         }  
     }
@@ -107,9 +107,7 @@ ISR(TIMER2_COMPA_vect){
     rate[9] = IBI;
     runningTotal += rate[9];
     runningTotal /= 10;
-    BPM = 15000/runningTotal;
-    Serial.print("\tBPM = ");
-    Serial.println(BPM);
-
-
+    BPM = 30000/runningTotal;
+    //Serial.print("\tBPM = ");
+    //Serial.println(BPM);
   }
