@@ -1,7 +1,7 @@
 
 byte pinSignal = A0;
 
-#define thresh 275
+volatile unsigned int thresh = 275;
 
 volatile unsigned int s = 0;
 volatile int P = thresh;
@@ -22,7 +22,7 @@ word runningTotal = 0;
 
 void setup() {
   // put your setup code here, to run once:
-
+  pinMode(13,OUTPUT);
   interruptSetup();
   Serial.begin(115200);
 
@@ -49,6 +49,8 @@ ISR(TIMER2_COMPA_vect){
   s = analogRead(pinSignal);
   //Serial.print("s = ");
   //Serial.println(s);
+  //Serial.print("\t");
+
 
   numSample += 2;
   N = numSample - pNumSample;
@@ -61,37 +63,38 @@ ISR(TIMER2_COMPA_vect){
  if(s<thresh && N> (IBI/5)*3){
     if(s<T){T=s;}
  }
-
-  //Serial.print(P);
-  //Serial.print("\t");
-  //Serial.println(T);
-  
-  //Serial.print("\tIBI");
-  //Serial.print(IBI);
-    
+     
   if(N>250){
 
     //Serial.println(s);
-    if(s>thresh && N > (IBI/5)*3){
-  
+    if(s>thresh && !isPulse && N > (IBI/5)*3){
+
+        // Serial.print(s);
+         //Serial.print("\t");
+         //Serial.print(P);
+         //Serial.print("\t");
+         //Serial.print(T);
+         //Serial.print("\t");
+         //Serial.print(thresh);
+         //Serial.print("\t");
+         
+         digitalWrite(13,HIGH);
          isPulse = true;
          IBI = numSample - pNumSample;
          pNumSample = numSample; 
 
          //Serial.print("p\t");
          //Serial.println(IBI);
-      } 
-    }
 
-    if(isFirstBeat){
+      if(isFirstBeat){
         isFirstBeat  = false;
         isSecondBeat = true;
         sei();
         return;
       }
 
-   if(isSecondBeat){
-      isSecondBeat = false;
+      if(isSecondBeat){
+         isSecondBeat = false;
 
       for(i=0; i<10; i++){
           rate[i] = IBI;
@@ -107,7 +110,19 @@ ISR(TIMER2_COMPA_vect){
     rate[9] = IBI;
     runningTotal += rate[9];
     runningTotal /= 10;
-    BPM = 30000/runningTotal;
+    BPM = 40000/runningTotal;
     //Serial.print("\tBPM = ");
-    //Serial.println(BPM);
+    Serial.println(BPM);
+    }
+      
+  } 
+      
+    if(s<thresh && isPulse){
+        digitalWrite(13,LOW);
+        isPulse = false;
+        thresh = (P-T)/2 + T;
+        P = thresh;
+        T = thresh;
+      }
+
   }
