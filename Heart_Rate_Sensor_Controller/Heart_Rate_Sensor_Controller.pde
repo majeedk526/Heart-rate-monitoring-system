@@ -7,11 +7,19 @@ Serial port;  // The serial port, this is a new instance of the Serial class (an
 ControlP5 cp5;
 int a[]=new int[60];
 GPlot plot;
-int step=0;
+int step=1;
 GPointsArray points;
+ PFont font;
+
 void setup() {
   size(1000, 800);
   background(0);
+
+ 
+  // The font must be located in the sketch's 
+  // "data" directory to load successfully
+  font = createFont("Arial", 15);
+  textFont(font, 32);
 
   // Prepare the points for the plot
   points = new GPointsArray(60);
@@ -19,36 +27,30 @@ void setup() {
 
   for (int i=0; i<60; i++)
   {
-    points.add(i, random(0, 8));
+    points.add(i, random(0, 50));
   }
   plot.setPos(525, 225);
   plot.setPoints(points);
   plot.getXAxis().setAxisLabelText("time");
   plot.getYAxis().setAxisLabelText("Ampiltude");
   plot.setTitleText("Calculating the no of beats per minute");
-  port = new Serial(this, Serial.list()[0], 9600); // initializing the object by assigning a port and baud rate (must match that of Arduino)
-  port.clear();  // function from serial library that throws out the first reading, in case we started reading in the middle of a string from Arduino
-  serial = port.readStringUntil('\n'); // function that reads the string from serial port until a println and then assigns string to our string variable (called 'serial')
-  serial = null; // initially, the string will be null (empty)
-  println(plot.getPointsRef().get(59));
+  
+  //port = new Serial(this, Serial.list()[0], 9600); // initializing the object by assigning a port and baud rate (must match that of Arduino)
+  //port.clear();  // function from serial library that throws out the first reading, in case we started reading in the middle of a string from Arduino
+  //serial = port.readStringUntil('\n'); // function that reads the string from serial port until a println and then assigns string to our string variable (called 'serial')
+
+ // println(plot.getPointsRef().get(59));
 }
 
 void draw() {
-  // background(0);
 
-
-
-  PFont font;
-  // The font must be located in the sketch's 
-  // "data" directory to load successfully
-  font = createFont("Arial", 15);
-  textFont(font, 32);
+  
   text("Heart Rate Sensor", 350, 50);
   
 
-  while (port.available() > 0) { //as long as there is data coming from serial port, read it and store it 
-    serial = port.readStringUntil('\n');
-  }
+  //while (port.available() > 0) { //as long as there is data coming from serial port, read it and store it 
+    //serial = port.readStringUntil('\n');
+  //}
   if (serial != null) {  //if the string is not empty, print the following
 
     /*  Note: the split function used below is not necessary if sending only a single variable. However, it is useful for parsing (separating) messages when
@@ -59,23 +61,29 @@ void draw() {
     //println(a[0]); //print Value1 (in cell 1 of Array - remember that arrays are zero-indexed)
     //println(a[1]); //print Value2 value
   }
+  
   textFont(font, 16);
   text("BEATS PER MINUTE", 50, 340);
-  float c=random(0, 70);
+  float c=random(0, 50);
   fill(255);
   rect(50, 350, 150, 80);
   fill(color(160, 160, 160));
   textSize(20);
   text(c, 50, 390);
-  for (int i = 0; i < 60; i++) {
-    points.add(i, 0);
+  
+  for (int i = 1; i< 59; i++) {
+    //points.add(i-1, plot.getPointsRef().get(i));
+    //plot.removePoint(i-1);
+    //plot.addPoint(plot.getPointsRef().get(i));
+    //plot.removePoint(i);  
+    
   }
-  plot.addPoint(new GPoint(step, random(0, 50)));
+  
+  //plot.removePoint(0);
   plot.removePoint(0);
+  plot.addPoint(new GPoint(step, random(0, 50)));
   step++;
-  if (step>60) {
-    step=0;
-  }
+  
   plot.beginDraw();
   plot.drawBackground();
   plot.drawXAxis();
@@ -85,5 +93,5 @@ void draw() {
   plot.drawLines();
   plot.endDraw();
 
-  // delay(500);
+  delay(50);
 }
