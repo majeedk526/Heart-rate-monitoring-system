@@ -33,17 +33,20 @@ void setup() {
                 .setBackgroundColor(255)           
                 .setColorLabel(255);
   
+  portNames = Serial.list();
+  dList.addItems(portNames);
 
   // Prepare the points for the plot
-  points = new GPointsArray(60);
+  points = new GPointsArray(1000);
   plot = new GPlot(this);
 
-  for (int i=0; i<60; i++)
+  /**for (int i=0; i<1000; i++)
   {
     points.add(i, random(0, 50));
-  }
-  plot.setPos(525, 225);
+  }**/
+  plot.setPos(40, 225);
   plot.setPoints(points);
+  plot.setOuterDim(1000,300);
   plot.getXAxis().setAxisLabelText("time");
   plot.getYAxis().setAxisLabelText("Ampiltude");
   plot.setTitleText("Calculating the no of beats per minute");
@@ -56,6 +59,19 @@ void draw() {
     //serial = port.readStringUntil('\n');
   //}
   
+  if(port!=null && port.available()>0){
+   
+    String s = port.readStringUntil('\n');
+    if(s != null) { //<>//
+      String str[] = s.split("_"); //<>//
+      if(str[0].equals("b")){
+          updateBPM(Integer.parseInt(str[1].trim()));
+       } else if(str[0].equals("s")){
+          updateSignal(Long.parseLong(str[1].trim()));
+        }
+      }
+    }
+  
   plot.beginDraw();
   plot.drawBackground();
   plot.drawXAxis();
@@ -65,10 +81,10 @@ void draw() {
   plot.drawLines();
   plot.endDraw();
 
-  delay(50);
+  //delay(2);
 }
 
-void serialEvent(Serial s){
+void serialEvent2(Serial s){
   String[] str = s.readString().split("_");
   
   if(str[0].equals("b")){
@@ -89,24 +105,23 @@ void updateBPM(int val){
 }
 
 
-void updateSignal(int val){
+void updateSignal(long val){
 
   plot.addPoint(new GPoint(step, val));
   step++;
   
-  if(step > 100){
+  if(step > 1000){
     plot.removePoint(0);
   }
 }
 
 public void list(float choice){
  
-  //println(choice);
-  //println(cp5.get(DropdownList.class,"list").getValue());
   try {
     println("initiaitng port " + portNames[(int) choice]);
-    port = new Serial(this,portNames[(int) choice], 9600);
-    port.bufferUntil(7);
+    port = new Serial(this,portNames[(int) choice], 115200);
+    port.clear();
+   // port.bufferUntil(7);
     println("Success : port intialised");
   } catch (Exception e){
     println(e.toString());

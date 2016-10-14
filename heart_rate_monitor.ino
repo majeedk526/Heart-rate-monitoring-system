@@ -15,6 +15,8 @@ volatile bool isFirstBeat = true, isSecondBeat = false;
 volatile unsigned int rate[10];
 volatile unsigned long BPM = 0;
 
+volatile int valnum = 0;
+
 int i = 0;
 
 word runningTotal = 0;
@@ -51,6 +53,14 @@ ISR(TIMER2_COMPA_vect){
   //Serial.println(s);
   //Serial.print("\t");
 
+  if(valnum == 7){
+      Serial.print("s_");
+      Serial.println(s);
+      valnum = 0;
+    } else {
+
+        valnum++;
+      }
 
   numSample += 2;
   N = numSample - pNumSample;
@@ -110,8 +120,9 @@ ISR(TIMER2_COMPA_vect){
     rate[9] = IBI;
     runningTotal += rate[9];
     runningTotal /= 10;
-    BPM = 40000/runningTotal;
+    BPM = 60000/runningTotal;
     //Serial.print("\tBPM = ");
+    Serial.print("b_");
     Serial.println(BPM);
     }
       
