@@ -24,10 +24,9 @@ word runningTotal = 0;
 
 void setup() {
   // put your setup code here, to run once:
-  pinMode(13,OUTPUT);
+  pinMode(13, OUTPUT);
   interruptSetup();
   Serial.begin(115200);
-
 }
 
 void loop() {
@@ -36,104 +35,94 @@ void loop() {
 }
 
 
-void interruptSetup(){
-  
+void interruptSetup() {
+
   TCCR2A = 0x02; //sets WGM21
   TCCR2B = 0x06; //sets CS21 and CS22
   OCR2A = 0x7C; // set o/p compare register to 124 
   TIMSK2 = 0x02; //enables timer interrupt
   sei();  // enable interrupts
-  
-  }
+}
 
-ISR(TIMER2_COMPA_vect){
-  
+ISR(TIMER2_COMPA_vect) {
+  //Reading analog signal from sensor
   s = analogRead(pinSignal);
-  //Serial.print("s = ");
-  //Serial.println(s);
-  //Serial.print("\t");
 
-  if(valnum == 7){
-      Serial.print("s_");
-      Serial.println(s);
-      valnum = 0;
-    } else {
-
-        valnum++;
-      }
+  //Sampling, selecting every 7th Reading 
+  if (valnum == 7) {
+    Serial.print("s_");
+    Serial.println(s);
+    valnum = 0;
+  } else {
+    valnum++;
+  }
 
   numSample += 2;
   N = numSample - pNumSample;
 
-  //Serial.print("\tN = ");
-  //Serial.print(N);
-  
-  if(s>P && s>thresh){P=s;}
+  //Update Peak Value
+  if (s>P && s>thresh) {
+    P=s;
+  }
 
- if(s<thresh && N> (IBI/5)*3){
-    if(s<T){T=s;}
- }
-     
-  if(N>250){
+  //Update trough value
+  if (s<thresh && N> (IBI/5)*3) {
+    if (s<T) {
+      T=s;
+    }
+  }
 
-    //Serial.println(s);
-    if(s>thresh && !isPulse && N > (IBI/5)*3){
+  if (N>250) {
 
-        // Serial.print(s);
-         //Serial.print("\t");
-         //Serial.print(P);
-         //Serial.print("\t");
-         //Serial.print(T);
-         //Serial.print("\t");
-         //Serial.print(thresh);
-         //Serial.print("\t");
-         
-         digitalWrite(13,HIGH);
-         isPulse = true;
-         IBI = numSample - pNumSample;
-         pNumSample = numSample; 
+    //Check For high Pulse
+    if (s>thresh && !isPulse && N > (IBI/5)*3) {
+      digitalWrite(13, HIGH);
+      isPulse = true;
+      IBI = numSample - pNumSample;
+      pNumSample = numSample; 
 
-         //Serial.print("p\t");
-         //Serial.println(IBI);
-
-      if(isFirstBeat){
+      // detect first beat
+      if (isFirstBeat) {
         isFirstBeat  = false;
         isSecondBeat = true;
         sei();
         return;
       }
 
-      if(isSecondBeat){
-         isSecondBeat = false;
-
-      for(i=0; i<10; i++){
+      // update IBI on second beat
+      if (isSecondBeat) {
+        isSecondBeat = false;
+        for (i=0; i<10; i++) {
           rate[i] = IBI;
-        }  
-    }
-
-  runningTotal = 0;
-  for(i=0; i<8; i++){
-      rate[i] = rate[i+1];
-      runningTotal += rate[i];
-    }
-
-    rate[9] = IBI;
-    runningTotal += rate[9];
-    runningTotal /= 10;
-    BPM = 60000/runningTotal;
-    //Serial.print("\tBPM = ");
-    Serial.print("b_");
-    Serial.println(BPM);
-    }
-      
-  } 
-      
-    if(s<thresh && isPulse){
-        digitalWrite(13,LOW);
-        isPulse = false;
-        thresh = (P-T)/2 + T;
-        P = thresh;
-        T = thresh;
+        }
       }
 
+      // Average out IBI value
+      runningTotal = 0;
+      for (i=0; i<8; i++) {
+        rate[i] = rate[i+1];
+        runningTotal += rate[i];
+      }
+
+      rate[9] = IBI;
+      runningTotal += rate[9];
+      runningTotal /= 10;
+
+      // Calculate BPM
+      BPM = 50000/runningTotal;
+      // send BPM
+      Serial.print("b_");
+      Serial.println(BPM);
+    }
+  } 
+
+  //update trough value
+  if (s<thresh && isPulse) {
+    digitalWrite(13, LOW);
+    isPulse = false;
+    thresh = (P-T)/2 + T;
+    P = thresh;
+    T = thresh;
   }
+}
+
