@@ -7,3 +7,6 @@ An arduino based project for monitoring heart rate
 * Arduino Uno R3
 * Pulse sensor from http://pulsesensor.com/
 * Type A to B usb cable
+
+## Screen
+![Main screen](/screen/main.png)
