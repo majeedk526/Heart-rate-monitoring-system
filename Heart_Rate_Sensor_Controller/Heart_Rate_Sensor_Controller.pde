@@ -1,6 +1,6 @@
-import processing.serial.*; //import the Serial library //<>// //<>//
-import controlP5.*;
-import grafica.*;
+import processing.serial.*; //import the Serial library //<>//
+import controlP5.*; // library for control buttons/ list box
+import grafica.*; // library to plot graph
 
 Serial port;  // The serial port, this is a new instance of the Serial class (an Object)
 ControlP5 cp5;
@@ -17,6 +17,7 @@ DropdownList dList;
 
 void setup() {
 
+  //set window size and display heading
   size(1000, 800);
   background(159, 0, 0);
   textSize(70);
@@ -25,7 +26,7 @@ void setup() {
   text("BEATS PER MINUTE", 50, 700);
   updateBPM(0);
 
-
+  // Create list box and add COM port
   cp5 = new ControlP5(this);
   dList = cp5.addDropdownList("list")
     .setPosition(700, 60)
@@ -38,7 +39,7 @@ void setup() {
   portNames = Serial.list();
   dList.addItems(portNames);
 
-  // Prepare the points for the plot
+  // Setup graph and define points array size
   points = new GPointsArray(1000);
   plot = new GPlot(this);
 
@@ -65,6 +66,7 @@ void draw() {
     }
   }
 
+// update graph
   plot.beginDraw();
   plot.drawBackground();
   plot.drawXAxis();
@@ -73,12 +75,10 @@ void draw() {
   plot.getMainLayer().drawPoints();
   plot.drawLines();
   plot.endDraw();
-
-  //delay(2);
 }
 
+// update BPM on in the window
 void updateBPM(int val) {
-
   fill(255);
   rect(width/2-100, 650, 100, 100);
   fill(color(160, 160, 160));
@@ -87,18 +87,17 @@ void updateBPM(int val) {
 }
 
 
+// update value on graph
 void updateSignal(long val) {
-
   plot.addPoint(new GPoint(step, val));
   step++;
-
   if (step > 1000) {
     plot.removePoint(0);
   }
 }
 
+// open the COM port for serial communication
 public void list(float choice) {
-
   try {
     println("initiaitng port " + portNames[(int) choice]);
     port = new Serial(this, portNames[(int) choice], 115200);
